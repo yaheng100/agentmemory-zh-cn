@@ -1,0 +1,7 @@
+# Windows 批处理脚本保持 CRLF，保证双击可直接运行
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Python 与文档统一 LF
+*.py   text eol=lf
+*.md   text eol=lf
