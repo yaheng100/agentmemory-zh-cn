@@ -78,28 +78,15 @@ Viewer 是一个单文件 HTML（内联 CSS/JS，无外部资源）。本补丁�
 
 ## 更新记录
 
-- **2026-09-10（第三轮）** 276 条
-  - 修复 4 处「加载中」文案从未命中：源码用的是 **Unicode 省略号 `…`（U+2026）** 且形态为 `<h3>…</h3>` / `>…</div>`，旧规则误按 ASCII `...` 加单引号锚定
-  - 修复「暂无观测」筛选提示：源码结尾是 `'</p></div>'`，旧规则只写到 `'</p>'`
-  - 修复记忆栏说明句半截汉化（"记忆 are durable facts…"）
-  - 补齐 `Shown: N total.`、`— click to expand`、`↻ Rebuild Graph`、`Engine connection lost — reconnecting.`、
+### 2026-09-10（第三轮）201 → 276 条
+
+- 修复 4 处「加载中」文案从未命中：源码用的是 **Unicode 省略号 `…`（U+2026）** 且形态为 `<h3>…</h3>` / `>…</div>`，旧规则误按 ASCII `...` 加单引号锚定
+- 修复「暂无观测」筛选提示：源码结尾是 `'</p></div>'`，旧规则只写到 `'</p>'`
+- 修复记忆栏说明句半截汉化（"记忆 are durable facts…"）
+- 补齐 `Shown: N total.`、`— click to expand`、`↻ Rebuild Graph`、`Engine connection lost — reconnecting.`、
     `% of allocated heap in use …`、`Requires an LLM provider key …` 等长句的后半段
-  - 枚举值汉化扩展到断路器 / 工作进程 / 会话 / 操作状态与回放事件类型（新增 `VAL_ZH` 项 29 个）
-  - 新增注入后 JS 语法自检与 `valZh` 断言脚本
-
-## 校验脚本（可选）
-
-`apply` 之后建议跑一次，确认替换没有破坏内联 JS（需要 Node.js）：
-
-```bash
-# 1) 内联 <script> 语法自检（只解析，不执行）
-node tools/check_js_syntax.js "C:\path\to\...\dist\viewer\index.html"
-
-# 2) valZh 枚举映射断言 + 渲染点切换检查（含 CSS 类未被误改）
-node tools/verify_valzh.js "C:\path\to\...\dist\viewer\index.html"
-```
-
-两者通过时打印 `[OK]` 并以退出码 0 结束，可直接接入 CI。
+- 枚举值汉化扩展到断路器 / 工作进程 / 会话 / 操作状态与回放事件类型（新增 `VAL_ZH` 项 29 个）
+- 新增注入后 JS 语法自检与 `valZh` 断言脚本
 
 ### 2026-09-10（第四轮）276 → 295 条：headless 浏览器逐 tab 实测
 
@@ -116,6 +103,26 @@ node tools/verify_valzh.js "C:\path\to\...\dist\viewer\index.html"
 | 活动栏目标数 | `(25 targets)` | `(25 个目标)` |
 | 审计栏目标数 | `25 target(s):` | `25 个目标：` |
 | 空状态代码块注释 | `# Save a lesson explicitly` 等 4 组 | 全部中文化（命令本体保持原样） |
+
+## 校验脚本（可选）
+
+`apply` 之后建议跑一次，确认替换没有破坏内联 JS（需要 Node.js）：
+
+```bash
+# 1) 内联 <script> 语法自检（只解析，不执行）
+node tools/check_js_syntax.js "C:\path\to\...\dist\viewer\index.html"
+
+# 2) valZh 枚举映射断言 + 渲染点切换检查（含 CSS 类未被误改）
+node tools/verify_valzh.js "C:\path\to\...\dist\viewer\index.html"
+
+# 3) 终极复检：headless 浏览器逐 tab 真实渲染，扫出运行时才出现的英文
+#    （check 只能命中静态模板字符串，看不到 JS 运行时拼出来的内容）
+python tools/render_scan_i18n.py                  # 全部 12 个 tab + 截图
+python tools/render_scan_i18n.py dashboard memories    # 只看指定 tab
+```
+
+前两个通过时打印 `[OK]` 并以退出码 0 结束，可直接接入 CI；
+`render_scan_i18n.py` 理想结果是只剩 `agentmemory` / `github` 等品牌词。
 
 ## 安装前提
 
