@@ -14,7 +14,7 @@
 | Are you sure you want to delete... | 确定要删除 "xxx"？此操作不可撤销。 |
 | Running in BM25-only mode | 正以纯 BM25 模式运行 |
 
-覆盖范围：导航页签、仪表盘、会话详情、图谱、空状态说明（长段落）、删除确认对话框、加载提示、状态消息、搜索框 placeholder、悬浮提示、动态按钮文案，约 **200 条**。语言标记同步改为 `lang="zh-CN"`。
+覆盖范围：导航页签、仪表盘、会话详情、图谱、空状态说明（长段落）、删除确认对话框、加载提示、状态消息、枚举值（记忆类型 / 断路器状态 / 工作进程状态 / 会话状态 / 操作状态 / 回放事件类型）、搜索框 placeholder、可访问性标签、悬浮提示、动态按钮文案，共 **276 条**。语言标记同步改为 `lang="zh-CN"`。
 
 ## 快速开始
 
@@ -67,9 +67,39 @@ Viewer 是一个单文件 HTML（内联 CSS/JS，无外部资源）。本补丁�
 
 ## 已知保留项（刻意不翻）
 
-- `raw`：记忆类型值，翻译会影响功能判断
-- `AGENTMEMORY_SECRET`：环境变量名
+- 品牌词 `agentmemory`（含 `agentmemory viewer ·`、页脚版本号）
+- `AGENTMEMORY_SECRET`、`GRAPH_EXTRACTION_ENABLED` 等**环境变量名**
 - `github` 链接文字、API 路径、demo 示例数据
+- 「反馈问题」按钮生成的 **GitHub issue 正文模板**（`### What went wrong` 等）——该模板面向上游英文仓库维护者，保留英文更利于沟通
+- 浏览器控制台的 `console.warn / console.error` 日志
+
+> 说明：枚举值（记忆类型 `fact`/`architecture`、断路器状态 `open`/`closed`、操作状态 `pending`/`done` 等）
+> **只翻译显示文本**，`<option value="...">`、筛选参数与入库原值一律保持英文，不影响任何功能逻辑。
+
+## 更新记录
+
+- **2026-09-10（第三轮）** 276 条
+  - 修复 4 处「加载中」文案从未命中：源码用的是 **Unicode 省略号 `…`（U+2026）** 且形态为 `<h3>…</h3>` / `>…</div>`，旧规则误按 ASCII `...` 加单引号锚定
+  - 修复「暂无观测」筛选提示：源码结尾是 `'</p></div>'`，旧规则只写到 `'</p>'`
+  - 修复记忆栏说明句半截汉化（"记忆 are durable facts…"）
+  - 补齐 `Shown: N total.`、`— click to expand`、`↻ Rebuild Graph`、`Engine connection lost — reconnecting.`、
+    `% of allocated heap in use …`、`Requires an LLM provider key …` 等长句的后半段
+  - 枚举值汉化扩展到断路器 / 工作进程 / 会话 / 操作状态与回放事件类型（新增 `VAL_ZH` 项 29 个）
+  - 新增注入后 JS 语法自检与 `valZh` 断言脚本
+
+## 校验脚本（可选）
+
+`apply` 之后建议跑一次，确认替换没有破坏内联 JS（需要 Node.js）：
+
+```bash
+# 1) 内联 <script> 语法自检（只解析，不执行）
+node tools/check_js_syntax.js "C:\path\to\...\dist\viewer\index.html"
+
+# 2) valZh 枚举映射断言 + 渲染点切换检查（含 CSS 类未被误改）
+node tools/verify_valzh.js "C:\path\to\...\dist\viewer\index.html"
+```
+
+两者通过时打印 `[OK]` 并以退出码 0 结束，可直接接入 CI。
 
 ## 安装前提
 

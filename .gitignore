@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+*.bak-en
+*.zip
+.last_push_sha

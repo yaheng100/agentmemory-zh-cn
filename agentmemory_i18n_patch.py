@@ -31,6 +31,7 @@ I18N_TEXT = {
     "Crystals": "晶体", "Actions": "操作", "Replay": "回放", "Health": "健康",
     "Profile": "画像", "Workers": "工作进程", "Timeline": "时间线",
     "Dashboard": "仪表盘", "Audit": "审计", "Conventions": "约定",
+    "Activity": "活动", "Files": "文件",
     # 仪表盘
     "Recent Activity": "最近动态", "Recent Sessions": "最近会话",
     "Project Stats": "项目统计", "Project Summary": "项目摘要",
@@ -96,6 +97,14 @@ I18N_TEXT = {
     "No sessions": "暂无会话",
     # 授权
     "Viewer authorization required": "查看器需要授权",
+    # ---- 第二轮补漏（2026-09-10）：带冒号/独立词的文本节点 ----
+    # 说明：形如 ">Input:<" 的节点，旧的 "Input" 规则因带冒号而无法命中，故单列
+    "Frontier": "前沿", "External": "外部",
+    "End Session": "结束会话",
+    "Summarize unavailable": "无法生成摘要", "Summarize": "生成摘要",
+    "Input:": "输入：", "Output:": "输出：", "Tool:": "工具：",
+    "cwd:": "工作目录：", "started:": "开始：", "ended:": "结束：",
+    "model:": "模型：", "tags:": "标签：", "id:": "ID：",
 }
 
 # ------------------------------------------------------------------
@@ -144,9 +153,8 @@ I18N_JS = [
     ('<h3>Delete Memory</h3><p>Are you sure you want to delete "',
      '<h3>删除记忆</h3><p>确定要删除 "'),
     ('"? This action cannot be undone.', '"？此操作不可撤销。'),
-    # 观测筛选动态拼接
-    ("'No observations' + (obs.length > 0 ? ' match the filter (' + obs.length + ' total)' : ' for this session') + '",
-     "'暂无观测' + (obs.length > 0 ? '匹配当前筛选（共 ' + obs.length + ' 条）' : '——本会话') + '"),
+    # 观测筛选动态拼接（旧键开头多写了一个单引号，实际源码里 'No observations'
+    # 前面是 '>'（<p>No observations'），故从未命中；后文第二轮补漏里已按 '>No observations' 重写）
     ("' observations shown</div>'", "' 条观测已显示</div>'"),
     # 状态与提示消息
     ("'Running in BM25-only mode'", "'正以纯 BM25 模式运行'"),
@@ -161,11 +169,29 @@ I18N_JS = [
      "完整错误请查看浏览器控制台。如果看到 CSP "),
     ("violations, please open an issue with the agentmemory version ",
      "违规，请携带 agentmemory 版本号提交 issue："),
-    ("'critically high'", "'严重偏高'"),
-    ("'severely delayed'", "'严重延迟'"),
-    ("'Heap is running tight: '", "'堆内存吃紧：'"),
-    ("'Event loop '", "'事件循环 '"),
-    ("'Engine connection state: '", "'引擎连接状态：'"),
+    # humanizeHealthFlag：整条 return 语句替换。
+    # 早前版本把 "'critically high'"、"n'Event loop '" 等拆成单词替换，
+    # 既容易漏翻后半句（"% of allocated heap in use ..."），又会因列表先后顺序
+    # 互相破坏。这里按整句替换，一次到位。
+    ("return 'Heap is running tight: ' + m[1] + '% of allocated heap in use "
+     "(process memory ' + m[2] + ' MB). Informational \u2014 Node grows the heap on demand.';",
+     "return '堆内存吃紧：' + m[1] + '% 已分配堆在使用中（进程内存 ' + m[2] "
+     "+ ' MB）。仅供参考 \u2014\u2014 Node 会按需增长堆。';"),
+    ("return 'Memory ' + (m[1] === 'critical' ? 'critically high' : 'elevated') + "
+     "': ' + m[2] + '% of heap in use, process memory ' + m[3] + ' MB.';",
+     "return '内存' + (m[1] === 'critical' ? '严重偏高' : '偏高') + '：' + m[2] "
+     "+ '% 堆在使用中，进程内存 ' + m[3] + ' MB。';"),
+    ("return 'CPU ' + (m[1] === 'critical' ? 'critically high' : 'elevated') + "
+     "': ' + m[2] + '%.';",
+     "return 'CPU ' + (m[1] === 'critical' ? '严重偏高' : '偏高') + '：' + m[2] + '%。';"),
+    ("return 'Event loop ' + (m[1] === 'critical' ? 'severely delayed' : 'delayed') + "
+     "': ' + m[2] + ' ms behind. The worker is busy or blocked.';",
+     "return '事件循环' + (m[1] === 'critical' ? '严重延迟' : '延迟') + '：落后 ' + m[2] "
+     "+ ' ms。工作线程繁忙或被阻塞。';"),
+    ("return 'Engine connection lost \u2014 reconnecting.';",
+     "return '引擎连接已断开 \u2014\u2014 正在重连。';"),
+    ("return 'Engine connection state: ' + m[1] + '.';",
+     "return '引擎连接状态：' + m[1] + '。';"),
     ("'No graph data yet.'", "'暂无图谱数据。'"),
     ("No graph data yet. Building from observations and memories...",
      "暂无图谱数据。正在从观测和记忆构建..."),
@@ -174,25 +200,121 @@ I18N_JS = [
     ("'Import failed'", "'导入失败'"),
     ("'Deleted via viewer'", "'通过查看器删除'"),
     ("'Dashboard failed to load: '", "'仪表盘加载失败：'"),
-    ("'query failed / Retry'", "'查询失败 / 重试'"),
-    ("'request failed'", "'请求失败'"),
-    ("'no data yet'", "'暂无数据'"),
-    ("'Open dashboard'", "'打开仪表盘'"),
-    ("'Rebuild Graph'", "'重建图谱'"),
-    ("'Showing '", "'显示 '"),
-    ("'Shown: '", "'已显示: '"),
+    # 已删除的死键（均从未命中，保留只会误导）：
+    #   "'query failed / Retry'" / "'request failed'" / "'no data yet'" / "'Rebuild Graph'"
+    #     —— 原文里只出现在 // 注释中且用双引号，非用户可见
+    #   "'Open dashboard'"  —— 原文是 aria-label="Open dashboard"，已由属性规则处理
+    #   "'Shown: '"          —— 原文是 >Shown: ，已由 ">Shown: " 规则处理
+    #   "'End Session'"      —— 原文是 >End Session</button>，已由 I18N_TEXT 处理
+
     ("'Imported '", "'已导入 '"),
     ("'Done'", "'完成'"),
-    ("'Loading session details\u2026'", "'加载会话详情\u2026'"),
-    ("'Importing JSONL\u2026'", "'导入 JSONL\u2026'"),
-    ("'Loading replay\u2026'", "'加载回放\u2026'"),
-    ("'Loading sessions\u2026'", "'加载会话\u2026'"),
+    # Showing 拼接整句替换（只换 'Showing ' 会留下 "N of M nodes (most-connected first)..." 半截英文）
+    ("'Showing ' + state.graph.nodes.length + ' of ' + state.graph.totalNodes + "
+     "' nodes (most-connected first). The full graph is too large to render at once.';",
+     "'显示前 ' + state.graph.nodes.length + ' / ' + state.graph.totalNodes + "
+     "' 个节点（按连接数降序）。完整图谱过大，无法一次性渲染。';"),
+    # 注意：这几条在原文里是 <h3>…</h3> / >…</div> 形态（Unicode 省略号 U+2026），
+    # 前面不是单引号。旧版误写成 "'Loading replay…'" 带引号锚点，故从未命中。
+    ("<h3>Loading session details\u2026</h3>", "<h3>加载会话详情\u2026</h3>"),
+    (">Importing JSONL\u2026</div>", ">导入 JSONL\u2026</div>"),
+    ("Alerts (", "告警 ("),
+    ("Notes (", "备注 ("),
+    ("Pick a session to replay, or import Claude Code JSONL transcripts from ~/.claude/projects.",
+     "选择一个会话进行回放，或从 ~/.claude/projects 导入 Claude Code 的 JSONL 转录。"),
+    (">Loading replay\u2026</div>", ">加载回放\u2026</div>"),
+    (">Loading sessions\u2026</div>", ">加载会话\u2026</div>"),
     # 动态按钮文案
     ("btn.textContent = 'Summarize'", "btn.textContent = '生成摘要'"),
     ("btn.textContent = 'Summarizing", "btn.textContent = '摘要生成中"),
     # 主题切换
     ("'DARK'", "'深色'"), ("'LIGHT'", "'浅色'"),
     ("'End Session'", "'结束会话'"),
+
+    # ---- 第二轮补漏（2026-09-10）----
+    # 记忆栏说明句：原文 <strong>Memories</strong> 被文本节点规则单独翻成"记忆"，
+    # 导致出现"记忆 are durable facts..."半截汉化。此处把英文后半句整体替换。
+    ("are durable facts, architecture notes, conventions, and lessons saved via "
+     "<code>memory_remember</code> MCP tool or the <code>/agentmemory/remember</code> "
+     "endpoint. They survive across sessions and supersede each other as v1, v2, etc. ",
+     "是持久的事实、架构笔记、约定与经验，通过 <code>memory_remember</code> MCP 工具或 "
+     "<code>/agentmemory/remember</code> 接口保存。它们跨会话保留，并以 v1、v2 等版本互相取代。"),
+    # 计数文案：旧规则 "'Shown: '" 多了引号，从未命中；"total." 同样漏掉
+    (">Shown: ", ">已显示 "),
+    (" total.</span>", " 条</span>"),
+    # 观测筛选结果三元表达式整体替换（'No observations' 的 yet 分支已由文本规则处理）
+    # 注意：源码结尾是 '</p></div>'，旧版只写到 '</p>'，故从未命中。
+    (">No observations' + (obs.length > 0 ? ' match the filter (' + obs.length + ' total)' "
+     ": ' for this session') + '</p></div>'",
+     ">暂无观测' + (obs.length > 0 ? ' 条匹配筛选（共 ' + obs.length + ' 条）' "
+     ": ' 属于本次会话') + '</p></div>'"),
+    # 功能开关折叠提示："— click to " + collapse/expand
+    (">\u2014 click to ", ">\u2014 点击"),
+    ("'collapse' : 'expand'", "'收起' : '展开'"),
+    # 记忆详情/会话详情/经验/审计 的字段标签（形如 ">id: "，带空格故文本规则不命中）
+    (">id: ", ">ID："), (">origin: ", ">来源："), (">project: ", ">项目："),
+    (">created: ", ">创建："), (">supersedes: ", ">取代："), (">files: ", ">文件："),
+    (">tags: ", ">标签："), (">learned: ", ">学到："), (">last confirmed: ", ">最近确认："),
+    (">from ", ">来自 "),
+    # 各栏空状态说明与文档链接
+    ("report issue &rarr;", "反馈问题 &rarr;"),
+    ("Seed sample data", "填充示例数据"),
+    ("Or: wire up your real agent &rarr;", "或：接入你自己的 agent &rarr;"),
+    ("First run &rarr;", "首次运行 &rarr;"),
+    ("No procedures yet. Repeated patterns will be extracted as procedures.",
+     "暂无程序性记忆。重复出现的模式会被抽取为流程。"),
+    (">Trigger: ", ">触发："), (">Freq: ", ">频次："),
+    (">docs &rarr;", ">文档 &rarr;"),
+    ("Entities extracted, no relations between them yet. Nodes are grouped by kind; "
+     "edges appear as extraction sees entities acting on each other across more sessions "
+     "(larger models find them faster).",
+     "已抽取实体，但暂未发现实体间的关系。节点按类型分组；当抽取发现实体在更多会话中互相作用时，"
+     "就会出现边（模型越大发现越快）。"),
+    (">Connections: ", ">连接数："),
+    ("Memory types &rarr;", "记忆类型 &rarr;"),
+    ("Three ways to create them:", "三种创建方式："),
+    ("Action lifecycle docs &rarr;", "操作生命周期文档 &rarr;"),
+    ("Crystal pipeline &rarr;", "晶体流水线 &rarr;"),
+    ("Audit entries are created by governance operations (delete, evolve, consolidate).",
+     "审计记录由治理操作产生（删除、演进、整合）。"),
+    ("Learn more &rarr;", "了解更多 &rarr;"),
+    ("Lesson decay &amp; scoring &rarr;", "经验衰减与评分 &rarr;"),
+
+    # ---- 第三轮补漏（2026-09-10）----
+    # 1) 图谱区按钮与错误态
+    (">\u21bb Rebuild Graph</button>", ">\u21bb 重建图谱</button>"),
+    ("= 'graph/query failed (check server logs for HTTP error)';",
+     "= '图谱查询失败（请检查服务端日志中的 HTTP 错误）';"),
+    # 2) 功能开关横幅：需要 LLM key 的提示
+    ("' Requires an LLM provider key (ANTHROPIC_API_KEY, GEMINI_API_KEY, etc.).'",
+     "' 需要设置 LLM provider 密钥（ANTHROPIC_API_KEY、GEMINI_API_KEY 等）。'"),
+    # 3) 知识图谱关闭时的启用指引 "Set <FLAG>=true and restart."
+    ("'Set ' + (state.graph.disabledInfo.flag || 'GRAPH_EXTRACTION_ENABLED') "
+     "+ '=true and restart.'",
+     "'设置 ' + (state.graph.disabledInfo.flag || 'GRAPH_EXTRACTION_ENABLED') "
+     "+ '=true 并重启。'"),
+    # 4) 仪表盘错误提示结尾
+    ("'(top-right of the viewer) and the violation text.'",
+     "'（位于查看器右上角）以及违规文本。'"),
+    # 5) 可访问性标签 / 属性
+    ('aria-label="Open dashboard"', 'aria-label="打开仪表盘"'),
+    ('aria-label="Dismiss"', 'aria-label="关闭"'),
+    ('title="Importance: ', 'title="重要度：'),
+    ('title="Next (\u2192)"', 'title="下一个 (\u2192)"'),
+    ('title="Previous (\u2190)"', 'title="上一个 (\u2190)"'),
+    ('placeholder="~/.claude/projects or file.jsonl"',
+     'placeholder="~/.claude/projects 或 file.jsonl"'),
+
+    # ---- 第三轮补漏（2026-09-10）：状态类枚举值显示汉化 ----
+    # 断路器 / 工作进程 / 会话 / 操作 / 回放事件 kind，与 VAL_ZH 同一机制：
+    # 只换显示文本，筛选参数与入库原值保持英文。
+    ("esc(cb.state) + '</span>", "valZh(cb.state) + '</span>"),
+    ("esc(w.status) + '</span>", "valZh(w.status) + '</span>"),
+    ("esc(s.status) + '</span>", "valZh(s.status) + '</span>"),
+    ("esc(a.status) + '</span>", "valZh(a.status) + '</span>"),
+    ("esc(ev.kind) + '</span>", "valZh(ev.kind) + '</span>"),
+    ("' failures</div></div>'", "' 次失败</div></div>'"),
+    ("+ '>' + s + '</option>'", "+ '>' + valZh(s) + '</option>'"),
 ]
 
 # 表格表头 / 控件（HTML 结构形态）
@@ -203,6 +325,38 @@ I18N_STRUCT = [
     (">Enter <code>", ">输入 <code>"),
     (">DARK<", ">深色<"),
     (">Speed<", ">速度<"),
+
+    # ---- 第二轮补漏（2026-09-10）：枚举值显示汉化 ----
+    # 记忆类型 / 审计操作 / 关系类型 / 断路器状态 / 工作进程状态 / 会话状态 /
+    # 操作状态 / 回放事件 kind 的"显示值"汉化。
+    # 只改显示文本，<option value="...">、筛选参数、入库数据一律保持英文原值，不影响逻辑。
+    # 做法：在 TYPE_BADGES 定义之后注入 VAL_ZH 映射表 + valZh() 函数，
+    #       再把各渲染点由 esc(x) 换成 valZh(x)。
+    ("      bug: 'badge-red', workflow: 'badge-green', fact: 'badge-yellow'\n    };",
+     "      bug: 'badge-red', workflow: 'badge-green', fact: 'badge-yellow'\n    };\n"
+     "    var VAL_ZH = {\n"
+     "      pattern: '\u6a21\u5f0f', preference: '\u504f\u597d', architecture: '\u67b6\u6784',\n"
+     "      bug: '\u7f3a\u9677', workflow: '\u6d41\u7a0b', fact: '\u4e8b\u5b9e',\n"
+     "      observe: '\u89c2\u5bdf', compress: '\u538b\u7f29', remember: '\u8bb0\u4f4f', forget: '\u9057\u5fd8',\n"
+     "      evolve: '\u6f14\u8fdb', consolidate: '\u6574\u5408', share: '\u5171\u4eab', delete: '\u5220\u9664',\n"
+     "      import: '\u5bfc\u5165', export: '\u5bfc\u51fa',\n"
+     "      supersedes: '\u53d6\u4ee3', extends: '\u6269\u5c55', contradicts: '\u51b2\u7a81', related: '\u76f8\u5173',\n"
+     "      closed: '\u5df2\u5173\u95ed', open: '\u5df2\u65ad\u5f00', 'half-open': '\u534a\u5f00',\n"
+     "      running: '\u8fd0\u884c\u4e2d', starting: '\u542f\u52a8\u4e2d', stopped: '\u5df2\u505c\u6b62',\n"
+     "      active: '\u8fdb\u884c\u4e2d', completed: '\u5df2\u5b8c\u6210', done: '\u5df2\u5b8c\u6210',\n"
+     "      pending: '\u5f85\u5904\u7406', blocked: '\u53d7\u963b', cancelled: '\u5df2\u53d6\u6d88',\n"
+     "      prompt: '\u63d0\u793a\u8bcd', response: '\u54cd\u5e94',\n"
+     "      tool_call: '\u5de5\u5177\u8c03\u7528', tool_error: '\u5de5\u5177\u9519\u8bef',\n"
+     "      tool_result: '\u5de5\u5177\u7ed3\u679c'\n"
+     "    };\n"
+     "    function valZh(v) {\n"
+     "      var k = String(v == null ? '' : v).toLowerCase();\n"
+     "      return VAL_ZH[k] || v;\n"
+     "    }"),
+    ("esc(m.type) + '</span></td>'", "valZh(m.type) + '</span></td>'"),
+    ("' + esc(t) + '</option>'", "' + valZh(t) + '</option>'"),
+    ("esc(a.operation) + '</span> '", "valZh(a.operation) + '</span> '"),
+    ("esc(relType) + '</span>'", "valZh(relType) + '</span>'"),
 ]
 
 BACKUP_SUFFIX = ".bak-en"
