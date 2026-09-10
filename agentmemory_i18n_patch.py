@@ -313,8 +313,51 @@ I18N_JS = [
     ("esc(s.status) + '</span>", "valZh(s.status) + '</span>"),
     ("esc(a.status) + '</span>", "valZh(a.status) + '</span>"),
     ("esc(ev.kind) + '</span>", "valZh(ev.kind) + '</span>"),
+    # 仪表盘健康卡片：健康状态 + 连接状态（截图实测 healthy / connected 直出英文）
+    ("esc(healthStatus) + '</div>", "valZh(healthStatus) + '</div>"),
+    ("esc(snap.connectionState || 'unknown')", "valZh(snap.connectionState || 'unknown')"),
     ("' failures</div></div>'", "' 次失败</div></div>'"),
     ("+ '>' + s + '</option>'", "+ '>' + valZh(s) + '</option>'"),
+
+    # ---- 第四轮补漏（2026-09-10，headless 浏览器逐 tab 渲染实测发现）----
+    # 静态扫描看不到这些：要么由 JS 在运行时拼出，要么藏在代码块的注释里。
+    # 1) 头部日期：原文 new Date().toLocaleDateString('en-US', …) 渲染出 "Thu, Sep 10, 2026"
+    ("toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', "
+     "month: 'short', day: 'numeric' })",
+     "toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', "
+     "day: 'numeric', weekday: 'long' })"),
+    # 2) 右上角 WebSocket 状态标签（live / connecting... / polling · Ns）
+    ("setWsStatus('live', 'connected')", "setWsStatus('实时', 'connected')"),
+    ("setWsStatus('connecting...', 'disconnected')",
+     "setWsStatus('连接中...', 'disconnected')"),
+    ("setWsStatus('polling · ' + (POLL_INTERVAL_MS / 1000) + 's', 'disconnected')",
+     "setWsStatus('轮询 · 每 ' + (POLL_INTERVAL_MS / 1000) + ' 秒', 'disconnected')"),
+    # 3) 审计栏的目标数量
+    ("+ ' target(s): '", "+ ' 个目标：'"),
+    # 3b) 活动栏的目标数量（另一种拼接形态，截图实测 "[25 targets]"）
+    ("+ ' targets)</span>'", "+ ' 个目标)</span>'"),
+    # 3c) Token 节省卡片尾部（截图实测 "~2,376,160 tokens · $712.85 saved"）
+    ("+ ' tokens · '", "+ ' 个 token · 节省 '"),
+    ("+ ' saved</div></div>'", "+ '</div></div>'"),
+    # 3d) 仪表盘统计卡副标题（截图实测 "0 active" / "E357 edges" / "0 functions tracked"）
+    ("+ ' active</div></div>'", "+ ' 个进行中</div></div>'"),
+    ("+ ' edges</div></div>'", "+ ' 条边</div></div>'"),
+    ("+ ' functions tracked</div></div>'", "+ ' 个函数</div></div>'"),
+    # 4) 空状态「怎么创建」代码块里的英文注释（命令本体保持原样，只翻说明）
+    ("# Save a lesson explicitly\\nmemory_lesson_save",
+     "# 显式保存一条经验\\nmemory_lesson_save"),
+    ("# Or: Replay tab &rarr; Import JSONL auto-extracts lessons\\n"
+     "# from your past Claude Code sessions",
+     "# 或者：回放页签 &rarr; 导入 JSONL 会自动抽取经验\\n"
+     "# 来源：你过往的 Claude Code 会话"),
+    ("# 1. MCP tool (from any agent)", "# 1. MCP 工具（任意 agent 均可调用）"),
+    ("# 2. Curl", "# 2. Curl 命令"),
+    ("# 3. Hooks auto-extract from long session bodies",
+     "# 3. Hooks 会从长会话正文自动抽取"),
+    ("# Auto: import a JSONL transcript\\n#   Replay tab &rarr; Import JSONL\\n\\n"
+     "# Manual: crystallize a specific session",
+     "# 自动：导入一段 JSONL 转录\\n#   回放页签 &rarr; 导入 JSONL\\n\\n"
+     "# 手动：对指定会话做结晶"),
 ]
 
 # 表格表头 / 控件（HTML 结构形态）
@@ -347,7 +390,9 @@ I18N_STRUCT = [
      "      pending: '\u5f85\u5904\u7406', blocked: '\u53d7\u963b', cancelled: '\u5df2\u53d6\u6d88',\n"
      "      prompt: '\u63d0\u793a\u8bcd', response: '\u54cd\u5e94',\n"
      "      tool_call: '\u5de5\u5177\u8c03\u7528', tool_error: '\u5de5\u5177\u9519\u8bef',\n"
-     "      tool_result: '\u5de5\u5177\u7ed3\u679c'\n"
+     "      tool_result: '\u5de5\u5177\u7ed3\u679c',\n"
+     "      healthy: '\u5065\u5eb7', degraded: '\u964d\u7ea7', critical: '\u4e25\u91cd', unknown: '\u672a\u77e5',\n"
+     "      connected: '\u5df2\u8fde\u63a5', disconnected: '\u672a\u8fde\u63a5'\n"
      "    };\n"
      "    function valZh(v) {\n"
      "      var k = String(v == null ? '' : v).toLowerCase();\n"
