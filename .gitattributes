@@ -1,7 +1,7 @@
-# Windows 批处理脚本保持 CRLF，保证双击可直接运行
-*.cmd text eol=crlf
-*.bat text eol=crlf
+# 默认按文本处理，仓库内统一 LF
+* text=auto eol=lf
 
-# Python 与文档统一 LF
-*.py   text eol=lf
-*.md   text eol=lf
+# Windows 批处理脚本：关闭转换，原样保留 CRLF
+# （否则从 GitHub 下载 zip 后拿到 LF 结尾，双击可能异常）
+*.cmd -text
+*.bat -text
