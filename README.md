@@ -29,7 +29,10 @@ python agentmemory_i18n_patch.py check
 # 2. 应用汉化（自动备份官方英文原文为 index.html.bak-en）
 python agentmemory_i18n_patch.py apply
 
-# 3. 浏览器打开 http://localhost:3113，Ctrl+F5 强制刷新即可
+# 3. 应用「会话页布局修复」（可选，但强烈建议 —— 见下文）
+python agentmemory_layout_patch.py apply
+
+# 4. 浏览器打开 http://localhost:3113，Ctrl+F5 强制刷新即可
 ```
 
 脚本会自动定位 viewer 文件（通过 `npm root -g`）；定位失败时手动指定：
@@ -39,6 +42,39 @@ python agentmemory_i18n_patch.py apply --file "C:\path\to\node_modules\@agentmem
 ```
 
 Windows 用户也可以直接双击 `apply.cmd` / `restore.cmd`。
+
+## 会话页布局修复（`agentmemory_layout_patch.py`）
+
+本仓库的第二个补丁，解决「会话」页一个很别扭的默认布局。
+
+**问题**：会话视图是两栏布局 `minmax(300px,400px) minmax(0,1fr)`，
+但**没选中任何会话时**右侧详情面板是空的，却仍占着 `1fr`。
+结果会话列表被压在最多 400px 的窄栏里，右面约 **2/3 宽度全空**；
+窄栏还把命令预览挤成 3~4 行折行。
+
+**修复**：
+
+| 场景 | 修复前 | 修复后 |
+|---|---|---|
+| 未选中会话 | 列表 400px 窄栏 + 右侧全空 | 铺满整行，**固定三列**卡片网格（窄屏 1100px↓ 两列、820px↓ 单列） |
+| 选中会话 | 两栏 | 仍是两栏（左列表 + 右详情），只在真正需要时才分栏 |
+| 会话 ID | `9881b…74d417`（省略） | 完整 UUID `9881b897-914a-418d-9485-f46bd874d417` |
+| 命令预览 | 折行 3~4 行 | 裁到 2 行（`-webkit-line-clamp`） |
+| 包装标签 | 直接露出 `<command-message>…` | 清洗为可读的 `/命令 参数` |
+
+用法与汉化补丁一致：
+
+```bash
+python agentmemory_layout_patch.py check     # 检测（不改文件）
+python agentmemory_layout_patch.py apply     # 应用（自动备份）
+python agentmemory_layout_patch.py restore   # 回滚
+```
+
+> 实现细节：Claude Code 存下来的 `firstPrompt` 被**截断到约 200 字符**，
+> 所以 `<local-command-caveat>` 常常没有闭合标签 —— 清洗函数必须有
+> 「未闭合兜底」规则，否则整段英文提示会留在卡片上。
+
+两个补丁互不依赖，可单独 `apply` / `restore`。
 
 ## 恢复英文
 
@@ -77,6 +113,25 @@ Viewer 是一个单文件 HTML（内联 CSS/JS，无外部资源）。本补丁�
 > **只翻译显示文本**，`<option value="...">`、筛选参数与入库原值一律保持英文，不影响任何功能逻辑。
 
 ## 更新记录
+
+### 2026-09-11 新增「会话页布局修复」补丁（v2）
+
+起因：会话页把列表锁在 400px 窄栏里，未选中会话时右侧 2/3 全空，
+命令预览还被挤成 4 行折行。新增独立脚本 `agentmemory_layout_patch.py`
+（`check` / `apply` / `restore`），共 5 处替换点：
+
+1. CSS 两栏布局 → 未选中**固定三列**网格（窄屏降级 2 列/1 列）；选中才两栏
+2. CSS 预览裁到 2 行（`-webkit-line-clamp`）+ `.session-meta` 加 `word-break`
+3. JS 新增 `cleanSessionPreview()` + 渲染时按选中状态加 `has-detail` 类
+4. JS 预览调用清洗后的文本（长度 140 → 160）
+5. JS 会话 ID 由 `shortSessionId(s, 12)` 改为 `sessionId(s)`，显示完整 UUID
+
+**版本兼容**：脚本对每个替换点带多个 `old` 变体并按长度优先匹配，所以无论
+起点是上游原始文件（v0）还是上一版补丁（v1：自适应多列 + 省略 ID），
+`apply` 都能一步升到 v2。
+
+验证：隔离副本上分别验证 v0 → v2、v1 → v2、幂等、restore 全部通过；
+两条路径产物 md5 均与生产文件一致；CRLF 行尾保持不变。
 
 ### 2026-09-10（第三轮）201 → 276 条
 
